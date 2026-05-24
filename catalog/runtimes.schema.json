@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tonyq-org/bat-runtime-cache/catalog/runtimes.schema.json",
+  "title": "BAT Runtime Catalog",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "runtimes"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "runtimes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/runtime"
+      }
+    }
+  },
+  "$defs": {
+    "runtime": {
+      "type": "object",
+      "required": ["tool", "version", "platforms"],
+      "properties": {
+        "tool": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "platforms": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/platform"
+          }
+        }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "required": [
+        "platform",
+        "archiveType",
+        "url",
+        "sha256",
+        "installRoot",
+        "executables",
+        "versionCheck"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string"
+        },
+        "archiveType": {
+          "type": "string",
+          "enum": ["tar.gz"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "installRoot": {
+          "type": "string"
+        },
+        "executables": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "versionCheck": {
+          "type": "object",
+          "required": ["command", "expectedStdout"],
+          "properties": {
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "expectedStdout": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

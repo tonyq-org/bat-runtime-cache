@@ -1,0 +1,58 @@
+name: Build Codex Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact @openai/codex version, without platform suffix
+        required: true
+        type: string
+      publish:
+        description: Create or update the GitHub Release
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Codex runtime artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build artifacts
+        run: pnpm run build:codex -- --version "${{ inputs.version }}"
+
+      - name: Verify catalog
+        run: pnpm run verify:catalog -- "dist/codex/${{ inputs.version }}/runtimes.codex-${{ inputs.version }}.json"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-${{ inputs.version }}
+          path: dist/codex/${{ inputs.version }}/*
+
+      - name: Publish release
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="codex-${{ inputs.version }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/codex/${{ inputs.version }}/* --clobber
+          else
+            gh release create "$tag" dist/codex/${{ inputs.version }}/* \
+              --title "$tag" \
+              --notes "Codex runtime artifacts for @openai/codex ${{ inputs.version }}."
+          fi
